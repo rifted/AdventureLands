@@ -1,0 +1,62 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<script type="text/javascript">
+
+function construct(s){
+    return s+"a";
+}
+    
+data = "";
+for(i=0;i<1024*256;i++){
+    data = construct(data);
+}
+    
+function WebSocketTest()
+{
+  if ("WebSocket" in window)
+  {
+      host = "2.124.79.196";
+     var ws = new WebSocket("ws://"+host+":25563");
+      document.getElementById("sse").innerHTML="Connecting to host ("+host+")";
+      var relays = 0;
+      var wantedRelays = 100;
+      var d = new Date();
+      var n;
+     ws.onopen = function()
+     {
+        n = d.getTime();
+        ws.send("req:mo");
+        document.getElementById("sse").innerHTML+="<br />Established connection... awaiting reply";
+     };
+     ws.onmessage = function (evt) 
+     { 
+        var received_msg = evt.data;
+        document.getElementById("sse").innerHTML+="<br/>Relays: "+relays;
+        relays++;
+         if(relays == wantedRelays){
+             p = new Date();
+            document.getElementById("sse").innerHTML+="<br/>Relayed "+data.length*relays+"bytes in "+(p.getTime()-n)+"ms";
+         }else{
+             
+        ws.send("req:mo");
+         }
+     };
+     ws.onclose = function()
+     { 
+        
+     };
+  }
+  else
+  {
+     alert("WebSocket NOT supported by your Browser!");
+  }
+}
+</script>
+</head>
+<body>
+<div id="sse">
+   <a href="javascript:WebSocketTest()">Run Tests</a>
+</div>
+</body>
+</html>
