@@ -1,6 +1,9 @@
 var port = 25563, clients = [], serverName = "Alpha Server";
 var WebSocketServer = require('ws').Server , wss = new WebSocketServer({port: port});
 
+var version = 0.1;
+
+log("Running AdventureLands version "+version);
 log("Running on port "+port);
 
 fix = setInterval(function(){
@@ -15,17 +18,9 @@ wss.on('connection', function(ws) {
     ws.canSpeak = true;
     clients.push(ws);
     
-    //Construct Packet to send the client about server and clients
-    packet = new Packet("INITIAL");
-    packet.serverName = serverName;
-    packet.clients = clients.length;
-    ws.send(JSON.stringify(packet));
-    //End
+    new Packet("INITIAL").attr("serverName",serverName).attr("clientName",ws.displayName).attr("clients",clients.length).broadcast([ws]);
     
-    joinPacket = new Packet("PLAYER-JOIN");
-    joinPacket.player = ws.displayName;
-    broadcastPacket(joinPacket,clients);
-    
+    new Packet("PLAYER-JOIN").attr("player",ws.displayName).broadcast(clients);
     log(identity(ws)+" has joined. "+clients.length+" clients online.");
     
     ws.on('message', function(msg) {
@@ -33,7 +28,7 @@ wss.on('connection', function(ws) {
             packet = JSON.parse(msg);
             switch(packet.packetType){
                 case "MESSAGE":
-                    messagePacket = new Packet("PLAYER-MESSAGE");
+                    messagePacket = new Packet("RAW-MESSAGE");
                     if(packet.message.substring(0,1) !== "/"){
                         if(packet.message.length < 1) return;
                         if(packet.message.length > 128){
@@ -58,16 +53,29 @@ wss.on('connection', function(ws) {
                         log(identity(this)+" issued: '"+packet.message+"'");
                         switch(params[0]){
                             case "/name":
-                                for(i in clients){
-                                    if(clients[i].displayName.toLowerCase() == params[1].toLowerCase()){
-                                        messagePacket.message = "A player already has that name!";
-                                        broadcastPacket(messagePacket, [ws]);
-                                        return;
+                                if(params.length !== 2){
+                                    messagePacket.message = "Please check the command usage...";
+                                    broadcastPacket(messagePacket, [ws]);
+                                    return;
+                                }else{
+                                    for(i in clients){
+                                        if(clients[i].displayName.toLowerCase() == params[1].toLowerCase()){
+                                            messagePacket.message = "A player already has that name!";
+                                            broadcastPacket(messagePacket, [ws]);
+                                            return;
+                                        }
                                     }
                                 }
+                                oldName = this.displayName;
                                 log(identity(this)+" changed name to "+params[1]);
                                 ws.displayName = params[1];
                                 messagePacket.message = "Changed name!";
+                                
+                                changePacket = new Packet("RAW-MESSAGE");
+                                changePacket.sender = "SERVER";
+                                changePacket.message = oldName+" changed their name to "+params[1];
+                                broadcastPacket(changePacket, clients);
+                                
                                 break;
                             default:
                                 messagePacket.message = "Unknown command!";
@@ -96,7 +104,7 @@ wss.on('connection', function(ws) {
 function broadcastPacket(packet,list){
     for(i in list){
         try{
-            list[i].send(JSON.stringify(packet));
+            list[i].send(packet);
         }catch(err){
             //Terminate corrupted/closed socket
             list[i].terminate();
@@ -111,7 +119,27 @@ function log(msg){
 }
 
 function Packet(type){
-    this.packetType = type;
+    this._packet = new Object();
+    this._packet.packetType = type;
+    this.attr = function(att, val){
+        eval("this._packet."+att+"='"+val+"'");
+        return this;
+    };
+    this.getPacket = function(){
+        return JSON.stringify(this._packet);   
+    };
+    this.broadcast = function(list){
+        for(i in list){
+            try{
+                list[i].send(this.getPacket());
+            }catch(err){
+                //Terminate corrupted/closed socket
+                list[i].terminate();
+                list.splice(i,1);
+            }
+        }
+        return null;
+    }
 }
 
 function identity(ws){

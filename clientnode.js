@@ -37,12 +37,13 @@ function load(){
                 case "INITIAL":
                     break;
                 case "PLAYER-JOIN":
-                    new Message(null,packet.player+" joined the game!","yellow").pushToChat();
+                    console.log(packet);
+                    new Message(null,"<b>"+packet.player+"</b> joined the game!","yellow").pushToChat();
                     break;
                 case "PLAYER-DISCONNECT":
                     new Message(null,packet.player+" left the game!","yellow").pushToChat();
                     break;
-                case "PLAYER-MESSAGE":
+                case "RAW-MESSAGE":
                     new Message(packet.sender,packet.message,"white").pushToChat();
                     break;
                 default:
