@@ -1,7 +1,27 @@
 var port = 25563, clients = [], serverName = "Alpha Server";
 var WebSocketServer = require('ws').Server , wss = new WebSocketServer({port: port});
+var commands = require('./nodeservercommand.js');
+/*
+    Command Usage Guide
+    {}      Optional Paramater
+    []      Required paramater
+*/
+commands.add(new commands.Command("help","/help {command}","Provides information and help on commands",1,2,function(socket,params){
+    if(params.length == 1){
+        new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","Available commands:<br />/recon").broadcast([socket]);
+    }else{
+        for(i in commands.Registry){
+            if(commands.Registry[i].name == params[1]){
+                command = commands.Registry[i];
+                new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","/"+command.name+"<br />Usage: "+command.usage+"<br />"+command.helpDef).broadcast([socket]);
+                return;
+            }
+        }
+        new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","Unknown command").broadcast([socket]);
+    }
+}));
 
-var version = 0.1;
+var version = "0.1.4";
 
 log("Running AdventureLands version "+version);
 log("Running on port "+port);
@@ -28,67 +48,42 @@ wss.on('connection', function(ws) {
             packet = JSON.parse(msg);
             switch(packet.packetType){
                 case "MESSAGE":
-                    messagePacket = new Packet("RAW-MESSAGE");
                     if(packet.message.substring(0,1) !== "/"){
+                        messagePacket = new Packet("RAW-MESSAGE");
+                        /*Invalid Check*/
                         if(packet.message.length < 1) return;
                         if(packet.message.length > 128){
-                            messagePacket.sender = "SERVER";
-                            messagePacket.message = "Messages need to be less than 128 characters long!";
-                            broadcastPacket(messagePacket,[ws]);
+                            messagePacket.attr("sender","SERVER").attr("message","Messages need to be less than 128 characters long!").broadcast([ws]);
                             return;
                         }
                         if(!ws.canSpeak) return;
-                        messagePacket.message = packet.message.clean();
-                        messagePacket.sender = ws.displayName.clean();
-                        log("["+ws.displayName+"] "+messagePacket.message);
-                        broadcastPacket(messagePacket, clients);
+                        /*Invalid Check*/
+                        messagePacket.attr("message",packet.message.clean()).attr("sender",ws.displayName.clean()).broadcast(clients);
+                        log("["+ws.displayName+"] "+messagePacket._packet.message);
                         ws.canSpeak = false;
-                        sws = this;
-                        setTimeout(function(){
-                            sws.canSpeak=true;
-                        },1000);
+                        sws = this; setTimeout(function(){sws.canSpeak=true;},1000);
                     }else{
+                        command = commands.Registry[i];
                         params = packet.message.split(" ");
-                        messagePacket.sender = "SERVER";
-                        log(identity(this)+" issued: '"+packet.message+"'");
-                        switch(params[0]){
-                            case "/name":
-                                if(params.length !== 2){
-                                    messagePacket.message = "Please check the command usage...";
-                                    broadcastPacket(messagePacket, [ws]);
-                                    return;
-                                }else{
-                                    for(i in clients){
-                                        if(clients[i].displayName.toLowerCase() == params[1].toLowerCase()){
-                                            messagePacket.message = "A player already has that name!";
-                                            broadcastPacket(messagePacket, [ws]);
-                                            return;
-                                        }
-                                    }
-                                }
-                                oldName = this.displayName;
-                                log(identity(this)+" changed name to "+params[1]);
-                                ws.displayName = params[1];
-                                messagePacket.message = "Changed name!";
-                                
-                                changePacket = new Packet("RAW-MESSAGE");
-                                changePacket.sender = "SERVER";
-                                changePacket.message = oldName+" changed their name to "+params[1];
-                                broadcastPacket(changePacket, clients);
-                                
-                                break;
-                            default:
-                                messagePacket.message = "Unknown command!";
-                                break;
+                        for(i in commands.Registry){
+                            if("/"+command.name == params[0]){
+                               if(params.length >= command.minArg && params.length <= command.maxArg){
+                                   command.oncall(ws,params);
+                                   return;
+                               }else{
+                                   new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message",command.usage).broadcast([ws]);
+                                   return;
+                               }
+                            }
                         }
-                        broadcastPacket(messagePacket, [ws]);
+                        new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","Unknown Command!").broadcast([ws]);
                     }
                     break;
                 default:
                     break;
             }
         }catch(emsg){
-            error(emsg);
+            console.log(emsg);
         }
     });
     

@@ -37,7 +37,6 @@ function load(){
                 case "INITIAL":
                     break;
                 case "PLAYER-JOIN":
-                    console.log(packet);
                     new Message(null,"<b>"+packet.player+"</b> joined the game!","yellow").pushToChat();
                     break;
                 case "PLAYER-DISCONNECT":
@@ -59,16 +58,10 @@ function load(){
 }
 
 function sendMessage(){
-    if(document.getElementById("chattext").value == "/recon"){
-        jsClose = true;
-        socket.close();
-        document.getElementById("chattext").value = "";
-    }else{
-        msgPacket = new Packet("MESSAGE");
-        msgPacket.message = document.getElementById("chattext").value;
-        document.getElementById("chattext").value = "";
-        socket.send(JSON.stringify(msgPacket)); 
-    }
+    msgPacket = new Packet("MESSAGE");
+    msgPacket.message = document.getElementById("chattext").value;
+    document.getElementById("chattext").value = "";
+    socket.send(JSON.stringify(msgPacket)); 
 }
 
 function error(msg){
