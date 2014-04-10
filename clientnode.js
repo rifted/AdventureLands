@@ -35,12 +35,13 @@ function load(){
             packet = JSON.parse(msg);
             switch(packet.packetType){
                 case "INITIAL":
+                    new Message("CLIENT","Connected to "+packet.serverName,"yellow").pushToChat();
                     break;
                 case "PLAYER-JOIN":
-                    new Message(null,"<b>"+packet.player+"</b> joined the game!","yellow").pushToChat();
+                    new Message("CLIENT","<b>"+packet.player+"</b> joined the game!","yellow").pushToChat();
                     break;
                 case "PLAYER-DISCONNECT":
-                    new Message(null,packet.player+" left the game!","yellow").pushToChat();
+                    new Message("CLIENT","<b>"+packet.player+"</b> left the game!","yellow").pushToChat();
                     break;
                 case "RAW-MESSAGE":
                     new Message(packet.sender,packet.message,"white").pushToChat();
@@ -65,7 +66,7 @@ function sendMessage(){
 }
 
 function error(msg){
-    alert("Encountered Error: "+msg+".");
+    console.log("Encountered Error: "+msg+".");
 }
 function Packet(type){
     this.packetType = type;

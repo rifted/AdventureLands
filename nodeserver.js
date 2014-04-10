@@ -8,7 +8,11 @@ var commands = require('./nodeservercommand.js');
 */
 commands.add(new commands.Command("help","/help {command}","Provides information and help on commands",1,2,function(socket,params){
     if(params.length == 1){
-        new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","Available commands:<br />/recon").broadcast([socket]);
+        var cmds = [];
+        for(i in commands.Registry){
+            cmds.push("/"+commands.Registry[i].name);
+        }
+        new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","Available commands:<br />"+cmds.join(", ")).broadcast([socket]);
     }else{
         for(i in commands.Registry){
             if(commands.Registry[i].name == params[1]){
@@ -21,7 +25,7 @@ commands.add(new commands.Command("help","/help {command}","Provides information
     }
 }));
 
-var version = "0.1.4";
+var version = "0.1.5";
 
 log("Running AdventureLands version "+version);
 log("Running on port "+port);
@@ -63,9 +67,10 @@ wss.on('connection', function(ws) {
                         ws.canSpeak = false;
                         sws = this; setTimeout(function(){sws.canSpeak=true;},1000);
                     }else{
-                        command = commands.Registry[i];
+                        log(ws.displayName+" issued command '"+packet.message+"'")
                         params = packet.message.split(" ");
                         for(i in commands.Registry){
+                            command = commands.Registry[i];
                             if("/"+command.name == params[0]){
                                if(params.length >= command.minArg && params.length <= command.maxArg){
                                    command.oncall(ws,params);

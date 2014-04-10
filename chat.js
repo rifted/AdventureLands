@@ -14,7 +14,6 @@ $(document).ready(function(){
 });
 
 function Message(sender,message,colour){
-    
     message = message.replace(new RegExp(":P","g"), '<img src="chat/icons/tongue-out.png" />');
     message = message.replace(new RegExp(":D","g"), '<img src="chat/icons/very-happy-face.png" />');
     message = message.replace(new RegExp(":3","g"), '<img src="chat/icons/cute-face.png" />');
@@ -24,7 +23,7 @@ function Message(sender,message,colour){
     message = message.replace(new RegExp(":\\)","g"), '<img src="chat/icons/happy-face.png" />');
     message = message.replace(new RegExp(":\\(","g"), '<img src="chat/icons/sad-face.png" />');
     
-    if(sender == "SERVER" || sender === null){colour = "cyan";sender="SERVER"};
+    if(sender == "SERVER"){colour = "cyan";sender="SERVER"};
     this.sender = sender;
     this.message = message;
     this.colour = colour;
@@ -62,13 +61,18 @@ $(document).ready(function(){
 function updateChatView(){
     var showServer, showPlayers;
     showServer = ($("#chatOptionServer").attr("toggled") == "true");
+    showClient = ($("#chatOptionClient").attr("toggled") == "true");
     showPlayers = ($("#chatOptionPlayers").attr("toggled") == "true");
     $("#chatArea #chat .message").each(function(){
         $(this).show();
-        if((!showPlayers) && $(this).attr("data-sender") !== "SERVER"){
+        var flags = ["SERVER","CLIENT"];
+        if((!showPlayers) && flags.indexOf($(this).attr("data-sender")) == -1){
             $(this).hide();
         }
         if((!showServer) && $(this).attr("data-sender") == "SERVER"){
+            $(this).hide();
+        }
+        if((!showClient) && $(this).attr("data-sender") == "CLIENT"){
             $(this).hide();
         }
     });
@@ -77,12 +81,17 @@ function updateChatView(){
 function updateChatViewSingular(obj){
     var showServer, showPlayers;
     showServer = ($("#chatOptionServer").attr("toggled") == "true");
+    showClient = ($("#chatOptionClient").attr("toggled") == "true");
     showPlayers = ($("#chatOptionPlayers").attr("toggled") == "true");
     $(obj).show();
-    if((!showPlayers) && $(obj).attr("data-sender") !== "SERVER"){
+    var flags = ["SERVER","CLIENT"];
+        if((!showPlayers) && flags.indexOf($(obj).attr("data-sender")) == -1){
+            $(obj).hide();
+        }
+    if((!showServer) && $(obj).attr("data-sender") == "SERVER"){
         $(obj).hide();
     }
-    if((!showServer) && $(obj).attr("data-sender") == "SERVER"){
-          $(obj).hide();
+    if((!showClient) && $(obj).attr("data-sender") == "CLIENT"){
+        $(obj).hide();
     }
 }
