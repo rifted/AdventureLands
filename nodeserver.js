@@ -25,7 +25,7 @@ commands.add(new commands.Command("help","/help {command}","Provides information
     }
 }));
 
-var version = "0.1.5";
+var version = "0.1.7";
 
 log("Running AdventureLands version "+version);
 log("Running on port "+port);
@@ -47,7 +47,7 @@ wss.on('connection', function(ws) {
     new Packet("PLAYER-JOIN").attr("player",ws.displayName).broadcast(clients);
     log(identity(ws)+" has joined. "+clients.length+" clients online.");
     
-    new Packet("PLAYER-UPDATE").attr("player",ws.displayName).attr("x",50).attr("y",50).broadcast(clients);
+    new Packet("PLAYER-UPDATE").attr("subtype","static-position").attr("player",ws.displayName).attr("x",50).attr("y",50).broadcast(clients);
     
     ws.on('message', function(msg) {
         try{
@@ -86,6 +86,9 @@ wss.on('connection', function(ws) {
                         new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message","Unknown Command!").broadcast([ws]);
                     }
                     break;
+                case "REQUEST-MOVE":
+                    new Packet("PLAYER-UPDATE").attr("subtype","static-position").attr("player",ws.displayName).attr("x",packet.x).attr("y",packet.y).broadcast(clients);
+                    break;
                 default:
                     break;
             }
@@ -97,9 +100,7 @@ wss.on('connection', function(ws) {
     ws.on('close', function(){
         clients.splice(clients.indexOf(this),1);
         log(identity(this)+" has left. "+(clients.length)+" clients online.");
-        leavePacket = new Packet("PLAYER-DISCONNECT");
-        leavePacket.player = ws.displayName;
-        broadcastPacket(leavePacket,clients);
+        leavePacket = new Packet("PLAYER-DISCONNECT").attr("player",ws.displayName).broadcast(clients);
     });
 });
 
@@ -124,7 +125,7 @@ function Packet(type){
     this._packet = new Object();
     this._packet.packetType = type;
     this.attr = function(att, val){
-        eval("this._packet."+att+"='"+val+"'");
+        this._packet[att] = val;
         return this;
     };
     this.getPacket = function(){

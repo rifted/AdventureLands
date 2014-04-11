@@ -1,7 +1,7 @@
 var wsAva = ("WebSocket" in window);
 var port = "25563", host = "2.124.79.196", socket = null, jsClose = false, connected=false;
 var players = [];
-var stage,renderer;
+var stage,renderer,playerName;
 
 $(document).ready(load);
 function load(){
@@ -37,6 +37,7 @@ function load(){
             packet = JSON.parse(msg);
             switch(packet.packetType){
                 case "INITIAL":
+                    playerName = packet.clientName;
                     new Message("CLIENT","Connected to "+packet.serverName,"yellow").pushToChat();
                     break;
                 case "PLAYER-JOIN":
@@ -49,14 +50,18 @@ function load(){
                     new Message(packet.sender,packet.message,"white").pushToChat();
                     break;
                 case "PLAYER-UPDATE":
-                    for(i in players){
-                        if(players[i].name == packet.player){
-                            players[i].x = packet.x;   
-                            players[i].y = packet.y;
-                            return;
-                        }
+                    switch(packet.subtype){
+                        case "static-position":
+                            for(i in players){
+                                if(players[i].name == packet.player){
+                                    players[i].pixi.position.x = packet.x;   
+                                    players[i].pixi.position.y = packet.y;
+                                    return;
+                                }
+                            }
+                            players.push(new Player(packet.player,packet.x,packet.y));
+                            break;
                     }
-                    players.push(new Player(packet.player,packet.x,packet.y));
                     break;
                 default:
                     error("Unexpected Packet Type '"+packet.packetType+"'; perhaps you are running a client which does not support the server?");
@@ -71,25 +76,19 @@ function load(){
 }
 
 function sendMessage(){
-    msgPacket = new Packet("MESSAGE");
-    msgPacket.message = document.getElementById("chattext").value;
+    new Packet("MESSAGE").attr("message",document.getElementById("chattext").value).send();
     document.getElementById("chattext").value = "";
-    socket.send(JSON.stringify(msgPacket)); 
 }
 
 function error(msg){
     console.log("Encountered Error: "+msg+".");
 }
-function Packet(type){
-    this.packetType = type;
-}
+
 function Player(name,x,y){
     this.name = name;
-    this.x = x;
-    this.y = y;
     this.pixi = new PIXI.Sprite(PIXI.Texture.fromImage("chat/icons/tongue-out.png"));
     this.pixi.anchor.x = 0.5;
     this.pixi.anchor.y = 0.5;
-    this.pixi.position.x = this.x;
-    this.pixi.position.y = this.y;
+    this.pixi.position.x = x;
+    this.pixi.position.y = y;
 }
