@@ -25,11 +25,6 @@ commands.add(new commands.Command("help","/help {command}","Provides information
     }
 }));
 
-commands.add(new commands.Command("list", "/list", "Lists online players",1,1,function(socket,params){
-    nms = []; for(i in clients){nms.push(clients[i].displayName)};
-    new Packet("RAW-MESSAGE").attr("sender","SERVER").attr("message", nms.join(", ")).broadcast([socket]);
-}));
-
 var version = "0.1.7.1"; //want to stay at 0.1.7 for foreseeable future.
 
 log("Running AdventureLands version "+version);

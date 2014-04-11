@@ -19,6 +19,10 @@ function load(){
     }
     
     socket.onclose = function(){
+        for(i in players){
+           stage.removeChild(players[i].pixi);
+        }
+        players = [];
         if(jsClose){
             new Message(null,"<b>Closed connection, reconnecting in 5 seconds.</b>","#FF1919").pushToChat();
             jsClose=false;
@@ -44,6 +48,12 @@ function load(){
                     new Message("CLIENT","<b>"+packet.player+"</b> joined the game!","yellow").pushToChat();
                     break;
                 case "PLAYER-DISCONNECT":
+                    for(i in players){
+                        if(players[i].name == packet.player){
+                            stage.removeChild(players[i].pixi);
+                            players.splice(i,1);
+                        }
+                    }
                     new Message("CLIENT","<b>"+packet.player+"</b> left the game!","yellow").pushToChat();
                     break;
                 case "RAW-MESSAGE":
@@ -54,8 +64,8 @@ function load(){
                         case "static-position":
                             for(i in players){
                                 if(players[i].name == packet.player){
-                                    players[i].pixi.position.x = packet.x;   
-                                    players[i].pixi.position.y = packet.y;
+                                    dist = Math.abs(players[i].pixi.position.x-packet.x)+Math.abs(players[i].pixi.position.y-packet.y);
+                                    TweenLite.to(players[i].pixi.position, dist/500, {x:packet.x,y:packet.y, ease:"Linear.easeNone"});
                                     return;
                                 }
                             }
@@ -86,9 +96,16 @@ function error(msg){
 
 function Player(name,x,y){
     this.name = name;
-    this.pixi = new PIXI.Sprite(PIXI.Texture.fromImage("chat/icons/tongue-out.png"));
-    this.pixi.anchor.x = 0.5;
-    this.pixi.anchor.y = 0.5;
+    this.pixi = new PIXI.DisplayObjectContainer();
+    var sprite = new PIXI.Sprite(PIXI.Texture.fromImage("chat/icons/tongue-out.png"));
+    sprite.anchor.x = 0.5; sprite.anchor.y = 0.5; sprite.position.x = 0; sprite.position.y = 0;
+    this.pixi.addChild(sprite);
+    
+    var text = new PIXI.Text(name, {font:"16px 'Open Sans'", fill:"black"});
+    text.position.y -= 24;
+    text.anchor.x = 0.5;
+    this.pixi.addChild(text);
+    
     this.pixi.position.x = x;
     this.pixi.position.y = y;
 }
