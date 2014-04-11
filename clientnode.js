@@ -1,5 +1,7 @@
 var wsAva = ("WebSocket" in window);
 var port = "25563", host = "2.124.79.196", socket = null, jsClose = false, connected=false;
+var players = [];
+var stage,renderer;
 
 $(document).ready(load);
 function load(){
@@ -46,6 +48,16 @@ function load(){
                 case "RAW-MESSAGE":
                     new Message(packet.sender,packet.message,"white").pushToChat();
                     break;
+                case "PLAYER-UPDATE":
+                    for(i in players){
+                        if(players[i].name == packet.player){
+                            players[i].x = packet.x;   
+                            players[i].y = packet.y;
+                            return;
+                        }
+                    }
+                    players.push(new Player(packet.player,packet.x,packet.y));
+                    break;
                 default:
                     error("Unexpected Packet Type '"+packet.packetType+"'; perhaps you are running a client which does not support the server?");
                     break;
@@ -70,4 +82,14 @@ function error(msg){
 }
 function Packet(type){
     this.packetType = type;
+}
+function Player(name,x,y){
+    this.name = name;
+    this.x = x;
+    this.y = y;
+    this.pixi = new PIXI.Sprite(PIXI.Texture.fromImage("chat/icons/tongue-out.png"));
+    this.pixi.anchor.x = 0.5;
+    this.pixi.anchor.y = 0.5;
+    this.pixi.position.x = this.x;
+    this.pixi.position.y = this.y;
 }

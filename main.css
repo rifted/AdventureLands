@@ -98,3 +98,17 @@ body{
 #chatOptions button[toggled=true]{
     color:lime 
 }
+
+#gameArea{
+    position:absolute;
+    bottom:0px;
+    right:0px;
+    left:384px;
+    top:32px;
+    background-color:silver;
+    overflow:hidden;
+}
+
+#gameCanv{
+    height:100%;
+}

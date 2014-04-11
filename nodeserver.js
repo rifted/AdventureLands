@@ -30,11 +30,11 @@ var version = "0.1.5";
 log("Running AdventureLands version "+version);
 log("Running on port "+port);
 
-fix = setInterval(function(){
+/*fix = setInterval(function(){
     for(i in clients){
         clients[i].canSpeak = true;   
     }
-}, 5000);
+}, 5000);*/
 
 wss.on('connection', function(ws) {
     if(ws._socket.remoteAddress == undefined) return;
@@ -46,6 +46,8 @@ wss.on('connection', function(ws) {
     
     new Packet("PLAYER-JOIN").attr("player",ws.displayName).broadcast(clients);
     log(identity(ws)+" has joined. "+clients.length+" clients online.");
+    
+    new Packet("PLAYER-UPDATE").attr("player",ws.displayName).attr("x",50).attr("y",50).broadcast(clients);
     
     ws.on('message', function(msg) {
         try{
@@ -65,7 +67,7 @@ wss.on('connection', function(ws) {
                         messagePacket.attr("message",packet.message.clean()).attr("sender",ws.displayName.clean()).broadcast(clients);
                         log("["+ws.displayName+"] "+messagePacket._packet.message);
                         ws.canSpeak = false;
-                        sws = this; setTimeout(function(){sws.canSpeak=true;},1000);
+                        eval("setTimeout(function(){clients["+clients.indexOf(this)+"].canSpeak=true},1000)");
                     }else{
                         log(ws.displayName+" issued command '"+packet.message+"'")
                         params = packet.message.split(" ");
