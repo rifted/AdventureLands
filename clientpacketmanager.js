@@ -2,7 +2,7 @@ function Packet(type){
     this._packet = new Object();
     this._packet.packetType = type;
     this.attr = function(att, val){
-        eval("this._packet."+att+"='"+val+"'");
+        this._packet[att] = val;
         return this;
     };
     this.getPacket = function(){
