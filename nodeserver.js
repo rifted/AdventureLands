@@ -42,6 +42,7 @@ wss.on('connection', function(ws) {
     ws.pos = new Object();
     ws.pos.x = 50;
     ws.pos.y = 50;
+    ws.pos.moving = false;
     clients.push(ws);
     for(i in clients){
         new Packet("PLAYER-UPDATE").attr("subtype","static-position").attr("player",clients[i].displayName).attr("x",clients[i].pos.x).attr("y",clients[i].pos.y).broadcast([ws]);
@@ -88,8 +89,17 @@ wss.on('connection', function(ws) {
                     }
                     break;
                 case "REQUEST-MOVE":
-                    ws.pos.x = packet.x; ws.pos.y = packet.y;
-                    new Packet("PLAYER-UPDATE").attr("subtype","static-position").attr("player",ws.displayName).attr("x",packet.x).attr("y",packet.y).broadcast(clients);
+                    if(packet.x < 0 || packet.x > 720 || packet.y < 0 || packet.y > 480){
+                        new Packet("REQUEST-MOVE-ANSWER").attr("accepted",false).attr("x",ws.pos.x).attr("y",ws.pos.y).broadcast([ws]);
+                    }else{
+                        distance = Math.abs(ws.pos.x-packet.x)+Math.abs(ws.pos.y-packet.y);
+                        ws.pos.x = packet.x; ws.pos.y = packet.y;
+                        new Packet("REQUEST-MOVE-ANSWER").attr("accepted",true).attr("x",packet.x).attr("y",packet.y).broadcast([ws]);
+                        new Packet("PLAYER-UPDATE").attr("subtype","tween-position").attr("player",ws.displayName).attr("x",packet.x).attr("y",packet.y).broadcast(clients);
+                        ws.pos.moving = true;
+                        eval("setTimeout(function(){try{clients["+clients.indexOf(ws)+"].pos.moving=false}catch(e){}},"+(distance/500)*1000+")");
+                        //try-catch is for whether the player left the game whilst moving.
+                    }
                     break;
                 default:
                     break;

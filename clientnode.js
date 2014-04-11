@@ -2,8 +2,13 @@ var wsAva = ("WebSocket" in window);
 var port = "25563", host = "2.124.79.196", socket = null, jsClose = false, connected=false;
 var players = [];
 var stage,renderer,playerName;
+var smoothWorld = true;
+var motds = ["Beware of bobbybeescratcher!","Such alpha!","Donate... when we get a PayPal setup...","Awesome-sauce!","GraviRift :3"];
 
 $(document).ready(load);
+$(document).ready(function(){
+    $("#navBar").html(motds[Math.floor(Math.random()*motds.length)]);
+});
 function load(){
     connected=false;
     if("WebSocket" in window){
@@ -64,13 +69,34 @@ function load(){
                         case "static-position":
                             for(i in players){
                                 if(players[i].name == packet.player){
-                                    dist = Math.abs(players[i].pixi.position.x-packet.x)+Math.abs(players[i].pixi.position.y-packet.y);
+                                    players[i].pixi.position.set(packet.x,packet.y);
+                                    return;
+                                }
+                            }
+                            players.push(new Player(packet.player,packet.x,packet.y));
+                            break;
+                        case "tween-position":
+                            if(packet.player == playerName) break;
+                            for(i in players){
+                                if(players[i].name == packet.player){
+                                    dist = Math.sqrt(((players[i].pixi.position.x-packet.x)*(players[i].pixi.position.x-packet.x)) + ((players[i].pixi.position.y-packet.y)*(players[i].pixi.position.y-packet.y)));
                                     TweenLite.to(players[i].pixi.position, dist/500, {x:packet.x,y:packet.y, ease:"Linear.easeNone"});
                                     return;
                                 }
                             }
                             players.push(new Player(packet.player,packet.x,packet.y));
                             break;
+                    }
+                    break;
+                case "REQUEST-MOVE-ANSWER":
+                    if(!packet.accepted){
+                        for(i in players){
+                            if(players[i].name == playerName){
+                                TweenLite.killTweensOf(players[i].pixi.position);
+                                players[i].pixi.position.set(packet.x,packet.y);
+                                return;
+                            }
+                        }
                     }
                     break;
                 default:
@@ -98,7 +124,7 @@ function Player(name,x,y){
     this.name = name;
     this.pixi = new PIXI.DisplayObjectContainer();
     var sprite = new PIXI.Sprite(PIXI.Texture.fromImage("chat/icons/tongue-out.png"));
-    sprite.anchor.x = 0.5; sprite.anchor.y = 0.5; sprite.position.x = 0; sprite.position.y = 0;
+    sprite.anchor.x = 0.5; sprite.anchor.y = 0.5; sprite.position.set(0,0);
     this.pixi.addChild(sprite);
     
     var text = new PIXI.Text(name, {font:"16px 'Open Sans'", fill:"black"});
