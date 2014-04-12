@@ -1,5 +1,5 @@
 stage = new PIXI.Stage(0x66FF99, true);
-renderer = PIXI.autoDetectRenderer(720, 480);
+renderer = PIXI.autoDetectRenderer(960, 640);
 renderer.view.id = "gameCanv";
 document.getElementById("gameArea").appendChild(renderer.view);
 requestAnimFrame(animate);

@@ -40,7 +40,7 @@ body{
 
 #chatAreaWrapper{
      position:absolute;
-    top:86px;
+    top:70px;
     left:0px;
     bottom:0px;
     width:384px;
@@ -51,7 +51,7 @@ body{
     width:384px;
     height:26px;
     position:absolute;
-    top:60px;
+    top:44px;
     left:0px;
 }
 
@@ -68,17 +68,17 @@ body{
     top:0px;
     left:0px;
     right:0px;
-    height:32px;
+    height:16px;
     background-color:#1F1F1F;
     text-align:left;
-    line-height:32px;
+    line-height:16px;
     padding-left:5px;
     padding-right:5px;
 }
 
 #chatOptions{
     position:absolute;
-    top:32px;
+    top:16px;
     left:0px;
     height:28px;
     width:384px;
@@ -104,7 +104,7 @@ body{
     bottom:0px;
     right:0px;
     left:384px;
-    top:32px;
+    top:16px;
     background-color:silver;
     overflow:hidden;
 }
