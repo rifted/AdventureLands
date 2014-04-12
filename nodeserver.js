@@ -1,11 +1,15 @@
 var port = 25563, clients = [], serverName = "Alpha Server";
 var WebSocketServer = require('ws').Server , wss = new WebSocketServer({port: port});
+var terrain = new Array();
 var commands = require('./nodeservercommand.js');
 /*
     Command Usage Guide
     {}      Optional Paramater
     []      Required paramater
 */
+
+
+
 commands.add(new commands.Command("help","/help {command}","Provides information and help on commands",1,2,function(socket,params){
     if(params.length == 1){
         var cmds = [];
@@ -89,16 +93,29 @@ wss.on('connection', function(ws) {
                     }
                     break;
                 case "REQUEST-MOVE":
-                    if(packet.x < 0 || packet.x > 720 || packet.y < 0 || packet.y > 480){
+                    if(ws.pos.moving){
                         new Packet("REQUEST-MOVE-ANSWER").attr("accepted",false).attr("x",ws.pos.x).attr("y",ws.pos.y).broadcast([ws]);
                     }else{
-                        distance = Math.abs(ws.pos.x-packet.x)+Math.abs(ws.pos.y-packet.y);
+                        /*distance = Math.sqrt(((players[i].pos.x-packet.x)*(players[i].pixi.position.x-packet.x)) + ((players[i].pixi.position.y-packet.y)*(players[i].pixi.position.y-packet.y)));
                         ws.pos.x = packet.x; ws.pos.y = packet.y;
                         new Packet("REQUEST-MOVE-ANSWER").attr("accepted",true).attr("x",packet.x).attr("y",packet.y).broadcast([ws]);
                         new Packet("PLAYER-UPDATE").attr("subtype","tween-position").attr("player",ws.displayName).attr("x",packet.x).attr("y",packet.y).broadcast(clients);
                         ws.pos.moving = true;
-                        eval("setTimeout(function(){try{clients["+clients.indexOf(ws)+"].pos.moving=false}catch(e){}},"+(distance/500)*1000+")");
-                        //try-catch is for whether the player left the game whilst moving.
+                        eval("setTimeout(function(){try{clients["+clients.indexOf(ws)+"].pos.moving=false}catch(e){}},"+0.5+")");*/
+                        dir = packet.direction;
+                        switch(dir){
+                            case 2:
+                                
+                                break;
+                        }
+                    }
+                    break;
+                case "REQUEST-CHUNK":
+                    chunkX = Math.floor(ws.pos.x/320);
+                    chunkY = Math.floor(ws.pos.y/320);
+                    chunk = [];
+                    for(x=0;x<10;x++){
+                        
                     }
                     break;
                 default:

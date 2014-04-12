@@ -4,6 +4,14 @@ var players = [];
 var stage,renderer,playerName;
 var smoothWorld = true;
 var motds = ["Beware of bobbybeescratcher!","Such alpha!","Donate... when we get a PayPal setup...","Awesome-sauce!","GraviRift :3"];
+var terrain = new Object();
+terrain._data = new Array();
+terrain.hasChunk = function(x,y){
+    try{terrain._data[x][y]}catch(e){return false;}return true;
+}
+terrain.hasChunkX = function(x){
+    try{terrain._data[x]}catch(e){return false;}return true;
+}
 
 $(document).ready(load);
 $(document).ready(function(){
@@ -87,6 +95,20 @@ function load(){
                             players.push(new Player(packet.player,packet.x,packet.y));
                             break;
                     }
+                    for(i in players){
+                        if(players[i].name == packet.player){
+                            chunkCoord = playerChunk(players[i]);
+                            console.log(chunkCoord);
+                            if(terrain.hasChunk(chunkCoord.x,chunkCoord.y)){
+                                
+                            }else{
+                                new Packet("REQUEST-CHUNK").send();
+                            }
+                        }
+                    }
+                    break;
+                case "CHUNK-UPDATE":
+                    console.log("received "+packet);
                     break;
                 case "REQUEST-MOVE-ANSWER":
                     if(!packet.accepted){
@@ -134,4 +156,11 @@ function Player(name,x,y){
     
     this.pixi.position.x = x;
     this.pixi.position.y = y;
+}
+
+function playerChunk(p){
+    o = new Object();
+    o.x = Math.floor(p.pixi.position.x/320);
+    o.y = Math.floor(p.pixi.position.y/320);
+    return o;
 }
